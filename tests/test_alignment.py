@@ -46,6 +46,19 @@ def test_alignment_mutation_counting():
     assert aln.insertion_ct == 0
     assert aln.deletion_ct == 0
 
+def test_alignment_multi_mutation_counting():
+    """Test mutation counting"""
+    target = "AAACCCAAA"
+    query = "AAATTTAAA"
+    alignment = ["AAA---CCCAAA", "AAATTT---AAA"]
+
+    aln = Alignment(alignment, target, query)
+
+    # There should be 1 mismatch
+    assert aln.mutation_ct == 3
+    assert aln.insertion_ct == 0
+    assert aln.deletion_ct == 0
+
 
 def test_alignment_insertion():
     """Test insertion detection"""
