@@ -39,8 +39,6 @@ class Alignment:
             aligner = Align.PairwiseAligner()
             # Set gap penalties to encourage keeping insertions/deletions adjacent
             # Gap opening is more costly than gap extension
-            aligner.open_gap_score = -1.0
-            aligner.extend_gap_score = -1.0 + aligner.epsilon
             alignments = aligner.align(target, query)
             # Get the first (best) alignment
             alignment = alignments[0]

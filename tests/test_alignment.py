@@ -42,7 +42,6 @@ def test_alignment_mutation_counting():
 
     aln = Alignment(target, query, alignment)
 
-    # There should be 1 mismatch
     assert aln.mutation_ct == 1
     assert aln.insertion_ct == 0
     assert aln.deletion_ct == 0
@@ -289,7 +288,8 @@ def test_auto_alignment_with_mismatch():
 
     # Create alignment without providing alignment parameter
     aln = Alignment(target, query)
-
+    # There should be 1 mismatch
+    print("Edits: ", aln.edits)
     # Should detect the mismatch (C->G at position 2)
     assert aln.mutation_ct >= 1
     assert aln.target == target

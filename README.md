@@ -155,15 +155,25 @@ with PdfPages("alignment_output.pdf") as pdf:
     plot_alignments(alignments, title="My Alignments", pdf=pdf)
 ```
 
-### Truncated View
+### Truncated View (Default)
 
-For alignments with many insertions, you can use truncated view to focus on the reference sequence. In truncated mode, insertions are displayed as purple boxes with numbers indicating insertion length:
+By default, PyIGV uses truncated view to focus on the reference sequence. In truncated mode, insertions are displayed as purple boxes with numbers indicating insertion length:
 
 ```python
 plot_alignments(
     alignments,
-    title="Truncated View",
-    truncate=True  # Removes insertions from display, shows counts
+    title="Truncated View"
+    # truncate=True is the default
+)
+```
+
+To show full alignments including all insertions, set `truncate=False`:
+
+```python
+plot_alignments(
+    alignments,
+    title="Full View",
+    truncate=False  # Show all insertions in full
 )
 ```
 
@@ -208,7 +218,7 @@ plot_alignments(
     alignments,
     title: Optional[str] = None,
     pdf: Optional[str] = None,
-    truncate: bool = False,
+    truncate: bool = True,
     return_fig: bool = False
 ) -> Optional[plt.Figure]
 ```
@@ -217,7 +227,7 @@ plot_alignments(
 - `alignments`: List of Alignment objects to visualize
 - `title` (optional): Title for the plot. If not provided, defaults to "Alignments"
 - `pdf` (optional): PdfPages object for saving to PDF
-- `truncate` (optional): If True, removes insertions from display and shows them as numbered purple boxes
+- `truncate` (optional): If True (default), removes insertions from display and shows them as numbered purple boxes. Set to False to show full alignments.
 - `return_fig` (optional): If True, returns the Figure object instead of None
 
 **Returns:**
@@ -262,13 +272,14 @@ The output shows:
 - Color-coded differences (mismatches, insertions, deletions)
 - Sorted by alignment quality (best matches first)
 
-### Truncated View
-When you have sequences with insertions, truncated view shows insertion counts as purple boxes:
+### Truncated View (Default)
+By default, sequences with insertions are shown in truncated view with insertion counts as purple boxes:
 
 ![Example Truncated Output](docs/images/example_output_truncated.png)
 
 ```python
-plot_alignments(alignments, title="Example Truncated View", truncate=True)
+# Default behavior (truncate=True)
+plot_alignments(alignments, title="Example Truncated View")
 ```
 
 ## Development
@@ -301,7 +312,7 @@ flake8 src/ tests/
 - Python 3.7+
 - numpy >= 1.19.0
 - matplotlib >= 3.3.0
-- biopython >= 1.79
+- biopython >= 1.86
 
 ## License
 
