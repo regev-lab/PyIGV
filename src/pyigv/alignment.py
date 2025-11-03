@@ -188,7 +188,7 @@ def plot_alignments(
     alignments,
     title: Optional[str] = None,
     pdf: Optional[str] = None,
-    truncate: bool = False,
+    truncate: bool = True,
     return_fig: bool = False,
 ) -> Optional[plt.Figure]:
     alignments.sort()
