@@ -144,24 +144,28 @@ class Alignment:
             other.deletion_ct,
         ]
 
-    def get_color_row(self, truncate=False):
+    def get_color_row(self, truncate: bool = False):
         if truncate:
             return [
-                mismatch_colors.get(symbol, "gray")
-                if edit == "M"
-                else ("gray" if edit == " " else "white")
+                (
+                    mismatch_colors.get(symbol, "gray")
+                    if edit == "M"
+                    else ("gray" if edit == " " else "white")
+                )
                 for symbol, edit in zip(self.symbols, self.edits)
                 if edit != "I"
             ]
 
         return [
-            mismatch_colors.get(symbol, "gray")
-            if (edit == "I" or edit == "M")
-            else ("gray" if edit == " " else "white")
+            (
+                mismatch_colors.get(symbol, "gray")
+                if (edit == "I" or edit == "M")
+                else ("gray" if edit == " " else "white")
+            )
             for symbol, edit in zip(self.symbols, self.edits)
         ]
 
-    def get_symbols(self, truncate=False):
+    def get_symbols(self, truncate: bool = False):
         if truncate:
             return [
                 symbol for symbol, edit in zip(self.symbols, self.edits) if edit != "I"
@@ -180,7 +184,12 @@ class Alignment:
 
 
 # alignments should be of type alignment
-def plot_alignments(alignments, barcode="", overlap_name="", pdf=None, truncate=False):
+def plot_alignments(
+    alignments,
+    title: Optional[str] = None,
+    pdf: Optional[str] = None,
+    truncate: bool = False,
+):
     alignments.sort()
 
     expected_ref = alignments[0].target
@@ -255,8 +264,14 @@ def plot_alignments(alignments, barcode="", overlap_name="", pdf=None, truncate=
     ax.set_yticks([])
 
     # Add title
+
+    if title:
+        plot_title = f"{title} | Alignments: {n_rows}"
+    else:
+        plot_title = f"Alignments: {n_rows}"
+
     ax.set_title(
-        f"Barcode: {barcode} | Overlap: {overlap_name} | Alignments: {n_rows}",
+        plot_title,
         fontsize=14,
         pad=10,
     )

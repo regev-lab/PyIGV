@@ -1,5 +1,6 @@
 import matplotlib
-matplotlib.use('Agg')  # Use non-interactive backend for testing
+
+matplotlib.use("Agg")  # Use non-interactive backend for testing
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from pyigv import Alignment, plot_alignments
@@ -45,6 +46,7 @@ def test_alignment_mutation_counting():
     assert aln.mutation_ct == 1
     assert aln.insertion_ct == 0
     assert aln.deletion_ct == 0
+
 
 def test_alignment_multi_mutation_counting():
     """Test mutation counting"""
@@ -159,7 +161,7 @@ def test_plot_alignments_basic():
     alignments = [aln1, aln2]
 
     # Test plotting without saving
-    fig = plot_alignments(alignments, barcode="TEST", overlap_name="test_overlap")
+    fig = plot_alignments(alignments, title="TEST")
 
     assert fig is not None
     plt.close(fig)
@@ -168,7 +170,6 @@ def test_plot_alignments_basic():
 def test_plot_alignments_with_pdf(tmp_path):
     """Test plotting with PDF output"""
     output_path = tmp_path / "test_plot.pdf"
-
     target = "AAATAAA"
     query1 = "AAAGAAA"
 
@@ -185,6 +186,37 @@ def test_plot_alignments_with_pdf(tmp_path):
     assert output_path.stat().st_size > 0
 
 
+def test_plot_alignments_with_multiple_queries(tmp_path):
+    """Test plotting with multiple queries against one target"""
+    output_path = tmp_path / "test_plot_multiple_queries.pdf"
+
+    target = "AAACCCGGGTTTATATATAT"
+    queries = [
+        "AAACCCGGGTTTATATATAT",  # Perfect match
+        "AAAGCCGGGTTTATATATAT",  # One mismatch
+        "AAACCCGGGTTTTATATAT",  # One deletion
+        "AAACCCGGGTTTATATATATAT",  # One insertion
+        "AAATTTGGGAAACCCCCCCC",  # Multiple changes
+    ]
+
+    # Create alignments for all queries
+    alignments = []
+    for query in queries:
+        aln = Alignment(target, query)
+        alignments.append(aln)
+
+    # Create PDF with all alignments
+    with PdfPages(str(output_path)) as pdf:
+        fig = plot_alignments(alignments, title="Multiple Queries Test", pdf=pdf)
+        plt.close(fig)
+
+    # Check that the file exists
+    assert output_path.exists()
+    assert output_path.stat().st_size > 0
+    assert len(alignments) == len(queries)
+    print(f"\nPDF with {len(queries)} alignments saved to: {output_path}")
+
+
 def test_plot_alignments_truncated():
     """Test truncated plotting mode"""
     target = "AAATAAA"
@@ -198,6 +230,39 @@ def test_plot_alignments_truncated():
 
     assert fig is not None
     plt.close(fig)
+
+
+def test_plot_alignments_with_multiple_queries_truncated(tmp_path):
+    """Test plotting with multiple queries against one target"""
+    output_path = tmp_path / "test_plot_multiple_queries.pdf"
+
+    target = "AAACCCGGGTTTATATATAT"
+    queries = [
+        "AAACCCGGGTTTATATATAT",  # Perfect match
+        "AAAGCCGGGTTTATATATAT",  # One mismatch
+        "AAACCCGGGTTTTATATAT",  # One deletion
+        "AAACCCGGGTTTATATATATAT",  # One insertion
+        "AAATTTGGGAAACCCCCCCC",  # Multiple changes
+    ]
+
+    # Create alignments for all queries
+    alignments = [Alignment(target, query) for query in queries]
+
+    # Create PDF with all alignments
+    with PdfPages(str(output_path)) as pdf:
+        fig = plot_alignments(
+            alignments,
+            title="Multiple Queries Test (Truncated)",
+            pdf=pdf,
+            truncate=True,
+        )
+        plt.close(fig)
+
+    # Check that the file exists
+    assert output_path.exists()
+    assert output_path.stat().st_size > 0
+    assert len(alignments) == len(queries)
+    print(f"\nPDF with {len(queries)} alignments saved to: {output_path}")
 
 
 # Tests for auto-alignment using Biopython PairwiseAligner
