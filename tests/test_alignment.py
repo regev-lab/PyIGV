@@ -11,7 +11,7 @@ def test_alignment_basic():
     query = "AAAGAAA"
     alignment = ["AAATAAA", "AAAGAAA"]
 
-    aln = Alignment(alignment, target, query)
+    aln = Alignment(target, query, alignment)
 
     # Check that the alignment was created
     assert aln.target == target
@@ -26,7 +26,7 @@ def test_alignment_with_gaps():
     query = "AAAGAAA"
     alignment = ["AAA-TAAA", "AAAGAAA-"]
 
-    aln = Alignment(alignment, target, query)
+    aln = Alignment(target, query, alignment)
 
     assert aln.insertion_ct >= 0
     assert aln.deletion_ct >= 0
@@ -39,7 +39,7 @@ def test_alignment_mutation_counting():
     query = "AAAT"
     alignment = ["AAAA", "AAAT"]
 
-    aln = Alignment(alignment, target, query)
+    aln = Alignment(target, query, alignment)
 
     # There should be 1 mismatch
     assert aln.mutation_ct == 1
@@ -52,7 +52,7 @@ def test_alignment_multi_mutation_counting():
     query = "AAATTTAAA"
     alignment = ["AAA---CCCAAA", "AAATTT---AAA"]
 
-    aln = Alignment(alignment, target, query)
+    aln = Alignment(target, query, alignment)
 
     # There should be 1 mismatch
     assert aln.mutation_ct == 3
@@ -66,7 +66,7 @@ def test_alignment_insertion():
     query = "AAAAA"
     alignment = ["AAAA-", "AAAAA"]
 
-    aln = Alignment(alignment, target, query)
+    aln = Alignment(target, query, alignment)
 
     assert aln.insertion_ct == 1
 
@@ -77,7 +77,7 @@ def test_alignment_deletion():
     query = "AAAA"
     alignment = ["AAAAA", "AAAA-"]
 
-    aln = Alignment(alignment, target, query)
+    aln = Alignment(target, query, alignment)
 
     assert aln.deletion_ct == 1
 
@@ -88,8 +88,8 @@ def test_alignment_comparison():
     query1 = "AAAA"
     query2 = "AAAT"
 
-    aln1 = Alignment(["AAAA", "AAAA"], target, query1)
-    aln2 = Alignment(["AAAA", "AAAT"], target, query2)
+    aln1 = Alignment(target, query1, ["AAAA", "AAAA"])
+    aln2 = Alignment(target, query2, ["AAAA", "AAAT"])
 
     # aln1 has fewer mutations, so it should be "less than" aln2
     assert aln1 < aln2
@@ -101,7 +101,7 @@ def test_alignment_str():
     query = "AAAT"
     alignment = ["AAAA", "AAAT"]
 
-    aln = Alignment(alignment, target, query)
+    aln = Alignment(target, query, alignment)
     str_repr = str(aln)
 
     assert "Target:" in str_repr
@@ -115,7 +115,7 @@ def test_get_color_row():
     query = "AAAT"
     alignment = ["AAAA", "AAAT"]
 
-    aln = Alignment(alignment, target, query)
+    aln = Alignment(target, query, alignment)
     color_row = aln.get_color_row()
 
     assert isinstance(color_row, list)
@@ -128,7 +128,7 @@ def test_get_symbols():
     query = "AAAT"
     alignment = ["AAAA", "AAAT"]
 
-    aln = Alignment(alignment, target, query)
+    aln = Alignment(target, query, alignment)
     symbols = aln.get_symbols()
 
     assert isinstance(symbols, list)
@@ -141,7 +141,7 @@ def test_get_insertion_indices():
     query = "AAAAA"
     alignment = ["AAAA-", "AAAAA"]
 
-    aln = Alignment(alignment, target, query)
+    aln = Alignment(target, query, alignment)
     indices = aln.get_insertion_indices()
 
     assert isinstance(indices, list)
@@ -153,8 +153,8 @@ def test_plot_alignments_basic():
     query1 = "AAAGAAA"
     query2 = "AAACAAA"
 
-    aln1 = Alignment(["AAATAAA", "AAAGAAA"], target, query1)
-    aln2 = Alignment(["AAATAAA", "AAACAAA"], target, query2)
+    aln1 = Alignment(target, query1, ["AAATAAA", "AAAGAAA"])
+    aln2 = Alignment(target, query2, ["AAATAAA", "AAACAAA"])
 
     alignments = [aln1, aln2]
 
@@ -172,7 +172,7 @@ def test_plot_alignments_with_pdf(tmp_path):
     target = "AAATAAA"
     query1 = "AAAGAAA"
 
-    aln1 = Alignment(["AAATAAA", "AAAGAAA"], target, query1)
+    aln1 = Alignment(target, query1, ["AAATAAA", "AAAGAAA"])
     alignments = [aln1]
 
     # Create PDF and plot
@@ -190,7 +190,7 @@ def test_plot_alignments_truncated():
     target = "AAATAAA"
     query1 = "AAAGAAA"
 
-    aln1 = Alignment(["AAATAAA", "AAAGAAA"], target, query1)
+    aln1 = Alignment(target, query1, ["AAATAAA", "AAAGAAA"])
     alignments = [aln1]
 
     # Test truncated mode
@@ -198,3 +198,93 @@ def test_plot_alignments_truncated():
 
     assert fig is not None
     plt.close(fig)
+
+
+# Tests for auto-alignment using Biopython PairwiseAligner
+def test_auto_alignment_identical_sequences():
+    """Test auto-alignment with identical sequences"""
+    target = "ATCGATCG"
+    query = "ATCGATCG"
+
+    # Create alignment without providing alignment parameter
+    aln = Alignment(target, query)
+
+    # Should have no mutations, insertions, or deletions
+    assert aln.mutation_ct == 0
+    assert aln.insertion_ct == 0
+    assert aln.deletion_ct == 0
+    assert aln.target == target
+    assert aln.query == query
+
+
+def test_auto_alignment_with_mismatch():
+    """Test auto-alignment with mismatches"""
+    target = "ATCGATCG"
+    query = "ATGGATCG"
+
+    # Create alignment without providing alignment parameter
+    aln = Alignment(target, query)
+
+    # Should detect the mismatch (C->G at position 2)
+    assert aln.mutation_ct >= 1
+    assert aln.target == target
+    assert aln.query == query
+
+
+def test_auto_alignment_with_insertion():
+    """Test auto-alignment with insertion in query"""
+    target = "ATCG"
+    query = "ATCCCG"
+
+    # Create alignment without providing alignment parameter
+    aln = Alignment(target, query)
+
+    # Should detect insertions
+    assert aln.insertion_ct >= 1
+    assert aln.target == target
+    assert aln.query == query
+
+
+def test_auto_alignment_with_deletion():
+    """Test auto-alignment with deletion in query"""
+    target = "ATCGATCG"
+    query = "ATCATCG"
+
+    # Create alignment without providing alignment parameter
+    aln = Alignment(target, query)
+
+    # Should detect deletion
+    assert aln.deletion_ct >= 1
+    assert aln.target == target
+    assert aln.query == query
+
+
+def test_auto_alignment_complex():
+    """Test auto-alignment with complex mutations"""
+    target = "AAACCCGGG"
+    query = "AAATTTGGG"
+
+    # Create alignment without providing alignment parameter
+    aln = Alignment(target, query)
+
+    # Should detect mutations (CCC->TTT could be mismatches or indels)
+    assert (aln.mutation_ct + aln.insertion_ct + aln.deletion_ct) >= 3
+    assert aln.target == target
+    assert aln.query == query
+
+
+def test_auto_alignment_maintains_compatibility():
+    """Test that auto-alignment produces compatible results with manual alignment"""
+    target = "ATCG"
+    query = "ATCG"
+
+    # Auto-alignment
+    auto_aln = Alignment(target, query)
+
+    # Manual alignment
+    manual_aln = Alignment(target, query, ["ATCG", "ATCG"])
+
+    # Both should produce identical results for identical sequences
+    assert auto_aln.mutation_ct == manual_aln.mutation_ct
+    assert auto_aln.insertion_ct == manual_aln.insertion_ct
+    assert auto_aln.deletion_ct == manual_aln.deletion_ct

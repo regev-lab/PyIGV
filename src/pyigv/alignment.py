@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from matplotlib.colors import ListedColormap
-from typing import Sequence
+from typing import Sequence, Optional
+from Bio import Align
 
 mismatch_colors = {"A": "green", "T": "red", "G": "gold", "C": "blue"}
 
@@ -26,12 +27,24 @@ class Alignment:
         yield start, len(edits), current_type
 
     # input alignment is an array-like object with two strings of the form "(Σ∪{-})*"
+    # if alignment is None, uses Biopython PairwiseAligner to generate alignment
     def __init__(
         self,
-        alignment: Sequence[str],
         target: str,
         query: str,
+        alignment: Optional[Sequence[str]] = None,
     ):
+        # If alignment is None, generate alignment using Biopython PairwiseAligner
+        if alignment is None:
+            aligner = Align.PairwiseAligner()
+            # Set gap penalties to encourage keeping insertions/deletions adjacent
+            # Gap opening is more costly than gap extension
+            aligner.open_gap_score = -1.0
+            aligner.extend_gap_score = -1.0 + aligner.epsilon
+            alignments = aligner.align(target, query)
+            # Get the first (best) alignment
+            alignment = alignments[0]
+
         self.target_alignment = alignment[0]
         self.query_alignment = alignment[1]
         self.query = query
