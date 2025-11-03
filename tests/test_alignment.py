@@ -161,7 +161,7 @@ def test_plot_alignments_basic():
     alignments = [aln1, aln2]
 
     # Test plotting without saving
-    fig = plot_alignments(alignments, title="TEST")
+    fig = plot_alignments(alignments, title="TEST", return_fig=True)
 
     assert fig is not None
     plt.close(fig)
@@ -226,7 +226,7 @@ def test_plot_alignments_truncated():
     alignments = [aln1]
 
     # Test truncated mode
-    fig = plot_alignments(alignments, truncate=True)
+    fig = plot_alignments(alignments, truncate=True, return_fig=True)
 
     assert fig is not None
     plt.close(fig)

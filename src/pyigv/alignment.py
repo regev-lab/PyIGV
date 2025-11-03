@@ -189,7 +189,8 @@ def plot_alignments(
     title: Optional[str] = None,
     pdf: Optional[str] = None,
     truncate: bool = False,
-):
+    return_fig: bool = False,
+) -> Optional[plt.Figure]:
     alignments.sort()
 
     expected_ref = alignments[0].target
@@ -282,4 +283,7 @@ def plot_alignments(
     else:
         plt.show()
 
-    return fig
+    if return_fig:
+        return fig
+    
+    return None

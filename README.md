@@ -2,6 +2,9 @@
 
 Python alignment viewer library based on the Integrative Genomics Viewer (IGV) style for visualizing DNA/RNA sequence alignments.
 
+![PyPI - Python Version](https://img.shields.io/badge/python-3.7%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 ## Overview
 
 PyIGV provides a simple, intuitive way to visualize pairwise sequence alignments in Python. It displays alignments in an IGV-like format, with color-coded mismatches, insertions, and deletions.
@@ -9,16 +12,17 @@ PyIGV provides a simple, intuitive way to visualize pairwise sequence alignments
 ## Installation
 
 ```bash
-pip install pyigv
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pyigv
 ```
 
 ## Features
 
 - **Color-coded visualization**: Mismatches are highlighted with base-specific colors (A=green, T=red, G=gold, C=blue)
+- **Automatic alignment**: Uses Biopython's PairwiseAligner when alignment strings aren't provided
 - **Gap handling**: Automatically detects and visualizes insertions and deletions
 - **Mutation counting**: Tracks the number of insertions, deletions, and substitutions
 - **PDF export**: Save alignment visualizations to PDF files
-- **Flexible display**: Option to show full alignments or truncated views
+- **Flexible display**: Option to show full alignments or truncated views (hiding insertions)
 
 ## Quick Start
 
@@ -29,11 +33,12 @@ from pyigv import Alignment, plot_alignments
 target = "AAATAAA"
 query = "AAAGAAA"
 
-# Create alignment (with gap notation using '-')
-alignment = ["AAATAAA", "AAAGAAA"]
+# Option 1: Auto-alignment (recommended)
+aln = Alignment(target, query)
 
-# Create Alignment object
-aln = Alignment(alignment, target, query)
+# Option 2: Provide pre-aligned sequences with gaps
+alignment = ["AAATAAA", "AAAGAAA"]
+aln = Alignment(target, query, alignment)
 
 # Print alignment information
 print(aln)
@@ -41,14 +46,29 @@ print(f"Mutations: {aln.mutation_ct}")
 print(f"Insertions: {aln.insertion_ct}")
 print(f"Deletions: {aln.deletion_ct}")
 
-# Visualize multiple alignments
+# Visualize alignments
 alignments = [aln]
-plot_alignments(alignments, barcode="Sample1", overlap_name="Region1")
+plot_alignments(alignments, title="Sample Alignment")
 ```
 
 ## Usage Examples
 
-### Basic Alignment
+### Auto-Alignment (No Pre-alignment Required)
+
+```python
+from pyigv import Alignment
+
+# PyIGV automatically aligns sequences using Biopython
+target = "AAACCCGGG"
+query = "AAATTTGGG"
+
+aln = Alignment(target, query)
+print(f"Mutations: {aln.mutation_ct}")
+print(f"Insertions: {aln.insertion_ct}")
+print(f"Deletions: {aln.deletion_ct}")
+```
+
+### Basic Alignment with Manual Alignment Strings
 
 ```python
 from pyigv import Alignment
@@ -57,7 +77,7 @@ from pyigv import Alignment
 target = "AAAA"
 query = "AAAA"
 alignment = ["AAAA", "AAAA"]
-aln = Alignment(alignment, target, query)
+aln = Alignment(target, query, alignment)
 print(f"Mutations: {aln.mutation_ct}")  # Output: 0
 ```
 
@@ -68,7 +88,7 @@ print(f"Mutations: {aln.mutation_ct}")  # Output: 0
 target = "AAAA"
 query = "AAAT"
 alignment = ["AAAA", "AAAT"]
-aln = Alignment(alignment, target, query)
+aln = Alignment(target, query, alignment)
 print(f"Mutations: {aln.mutation_ct}")  # Output: 1
 ```
 
@@ -79,7 +99,7 @@ print(f"Mutations: {aln.mutation_ct}")  # Output: 1
 target = "AAAA"
 query = "AAAAA"
 alignment = ["AAAA-", "AAAAA"]  # '-' indicates gap in target
-aln = Alignment(alignment, target, query)
+aln = Alignment(target, query, alignment)
 print(f"Insertions: {aln.insertion_ct}")  # Output: 1
 ```
 
@@ -90,7 +110,7 @@ print(f"Insertions: {aln.insertion_ct}")  # Output: 1
 target = "AAAAA"
 query = "AAAA"
 alignment = ["AAAAA", "AAAA-"]  # '-' indicates gap in query
-aln = Alignment(alignment, target, query)
+aln = Alignment(target, query, alignment)
 print(f"Deletions: {aln.deletion_ct}")  # Output: 1
 ```
 
@@ -100,21 +120,22 @@ print(f"Deletions: {aln.deletion_ct}")  # Output: 1
 from pyigv import Alignment, plot_alignments
 import matplotlib.pyplot as plt
 
-target = "AAATAAA"
+target = "AAACCCGGGTTTATATATAT"
 
-# Create multiple alignments
-aln1 = Alignment(["AAATAAA", "AAAGAAA"], target, "AAAGAAA")
-aln2 = Alignment(["AAATAAA", "AAACAAA"], target, "AAACAAA")
-aln3 = Alignment(["AAATAAA", "AAAAAAA"], target, "AAAAAAA")
+# Create multiple query sequences
+queries = [
+    "AAACCCGGGTTTATATATAT",  # Perfect match
+    "AAAGCCGGGTTTATATATAT",  # One mismatch
+    "AAACCCGGGTTTTATATAT",   # One deletion
+    "AAACCCGGGTTTATATATATAT", # One insertion
+    "AAATTTGGGAAACCCCCCCC",  # Multiple changes
+]
 
-alignments = [aln1, aln2, aln3]
+# Auto-align all queries against the target
+alignments = [Alignment(target, query) for query in queries]
 
 # Plot and display
-plot_alignments(
-    alignments,
-    barcode="TEST001",
-    overlap_name="Region_1"
-)
+plot_alignments(alignments, title="Multiple Query Comparison")
 plt.show()
 ```
 
@@ -125,28 +146,24 @@ from pyigv import plot_alignments
 from matplotlib.backends.backend_pdf import PdfPages
 
 # Create your alignments
-alignments = [aln1, aln2, aln3]
+target = "AAATAAA"
+queries = ["AAAGAAA", "AAACAAA", "AAAAAAA"]
+alignments = [Alignment(target, q) for q in queries]
 
 # Save to PDF
 with PdfPages("alignment_output.pdf") as pdf:
-    plot_alignments(
-        alignments,
-        barcode="TEST001",
-        overlap_name="Region_1",
-        pdf=pdf
-    )
+    plot_alignments(alignments, title="My Alignments", pdf=pdf)
 ```
 
 ### Truncated View
 
-For alignments with many insertions, you can use truncated view to focus on the reference sequence:
+For alignments with many insertions, you can use truncated view to focus on the reference sequence. In truncated mode, insertions are displayed as purple boxes with numbers indicating insertion length:
 
 ```python
 plot_alignments(
     alignments,
-    barcode="TEST001",
-    overlap_name="Region_1",
-    truncate=True  # Removes insertions from display
+    title="Truncated View",
+    truncate=True  # Removes insertions from display, shows counts
 )
 ```
 
@@ -157,18 +174,18 @@ plot_alignments(
 #### Constructor
 
 ```python
-Alignment(alignment: Sequence[str], target: str, query: str)
+Alignment(target: str, query: str, alignment: Optional[Sequence[str]] = None)
 ```
 
 **Parameters:**
-- `alignment`: A list/tuple of two strings representing the aligned sequences with gaps marked as '-'
 - `target`: The target (reference) sequence
 - `query`: The query sequence
+- `alignment` (optional): A list/tuple of two strings representing the aligned sequences with gaps marked as '-'. If not provided, uses Biopython's PairwiseAligner to automatically align the sequences.
 
 #### Attributes
 
-- `target`: Target sequence
-- `query`: Query sequence
+- `target`: Target sequence (without gaps)
+- `query`: Query sequence (without gaps)
 - `target_alignment`: Aligned target sequence with gaps
 - `query_alignment`: Aligned query sequence with gaps
 - `symbols`: Processed alignment symbols
@@ -179,34 +196,80 @@ Alignment(alignment: Sequence[str], target: str, query: str)
 
 #### Methods
 
-- `get_color_row(truncate=False)`: Get color codes for visualization
-- `get_symbols(truncate=False)`: Get alignment symbols
+- `get_color_row(truncate: bool = False)`: Get color codes for visualization
+- `get_symbols(truncate: bool = False)`: Get alignment symbols
 - `get_insertion_indices()`: Get positions and lengths of insertions
+- `__lt__(other)`: Compare alignments by number of edits (for sorting)
 
 ### `plot_alignments` Function
 
 ```python
-plot_alignments(alignments, barcode="", overlap_name="", pdf=None, truncate=False)
+plot_alignments(
+    alignments,
+    title: Optional[str] = None,
+    pdf: Optional[str] = None,
+    truncate: bool = False,
+    return_fig: bool = False
+) -> Optional[plt.Figure]
 ```
 
 **Parameters:**
 - `alignments`: List of Alignment objects to visualize
-- `barcode`: Label for the barcode/sample
-- `overlap_name`: Name of the overlapping region
-- `pdf`: PdfPages object for saving to PDF (optional)
-- `truncate`: If True, removes insertions from display
+- `title` (optional): Title for the plot. If not provided, defaults to "Alignments"
+- `pdf` (optional): PdfPages object for saving to PDF
+- `truncate` (optional): If True, removes insertions from display and shows them as numbered purple boxes
+- `return_fig` (optional): If True, returns the Figure object instead of None
 
 **Returns:**
-- matplotlib Figure object
+- matplotlib Figure object if `return_fig=True`, otherwise None
 
 ## Color Scheme
 
-- **Green (A)**: Adenine mismatches
-- **Red (T)**: Thymine mismatches
-- **Gold (G)**: Guanine mismatches
-- **Blue (C)**: Cytosine mismatches
+- **Green (A)**: Adenine mismatches or insertions
+- **Red (T)**: Thymine mismatches or insertions
+- **Gold (G)**: Guanine mismatches or insertions
+- **Blue (C)**: Cytosine mismatches or insertions
 - **Gray**: Matches
 - **White**: Deletions
+- **Purple boxes** (truncate mode): Insertion indicators with length
+
+## Example Output
+
+Here's what a typical PyIGV visualization looks like:
+
+```python
+from pyigv import Alignment, plot_alignments
+
+target = "AAACCCGGGTTTATATATAT"
+queries = [
+    "AAACCCGGGTTTATATATAT",  # Perfect match
+    "AAAGCCGGGTTTATATATAT",  # One mismatch
+    "AAACCCGGGTTTTATATAT",   # One deletion
+    "AAACCCGGGTTTATATATATAT", # One insertion
+    "AAATTTGGGAAACCCCCCCC",  # Multiple changes
+]
+
+alignments = [Alignment(target, q) for q in queries]
+plot_alignments(alignments, title="Example Alignment Visualization")
+```
+
+### Normal View
+![Example Alignment Output](docs/images/example_output.png)
+
+The output shows:
+- The reference sequence in the top row
+- Each query alignment in subsequent rows
+- Color-coded differences (mismatches, insertions, deletions)
+- Sorted by alignment quality (best matches first)
+
+### Truncated View
+When you have sequences with insertions, truncated view shows insertion counts as purple boxes:
+
+![Example Truncated Output](docs/images/example_output_truncated.png)
+
+```python
+plot_alignments(alignments, title="Example Truncated View", truncate=True)
+```
 
 ## Development
 
@@ -218,17 +281,27 @@ pip install -e ".[dev]"
 
 # Run tests
 pytest tests/
+
+# Run specific test
+pytest tests/test_alignment.py::test_plot_alignments_with_multiple_queries -v -s
 ```
 
 ### Code Quality
 
 ```bash
-# Format code
+# Format code with Black
 black src/ tests/
 
 # Lint code
 flake8 src/ tests/
 ```
+
+## Requirements
+
+- Python 3.7+
+- numpy >= 1.19.0
+- matplotlib >= 3.3.0
+- biopython >= 1.79
 
 ## License
 
@@ -252,3 +325,13 @@ https://github.com/regev-lab/PyIGV
 For issues, questions, or contributions, please visit:
 - Issue Tracker: https://github.com/regev-lab/PyIGV/issues
 - Source Code: https://github.com/regev-lab/PyIGV
+
+## Changelog
+
+### v0.1.0
+- Initial release
+- Color-coded alignment visualization
+- Automatic alignment using Biopython
+- PDF export support
+- Truncated view mode for insertions
+- Comprehensive test suite
