@@ -1,5 +1,5 @@
 # PyIGV
-
+![Example Truncated Output](docs/images/example_output_truncated.png)
 Python alignment viewer library based on the Integrative Genomics Viewer (IGV) style for visualizing DNA/RNA sequence alignments.
 
 ![PyPI - Python Version](https://img.shields.io/badge/python-3.7%2B-blue)
